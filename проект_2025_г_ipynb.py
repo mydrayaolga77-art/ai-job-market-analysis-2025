@@ -31,8 +31,7 @@ from email.message import EmailMessage
 
 import kagglehub
 
-# Укажите путь к датасету (обычно это "автор/название-датасета")
-# На основе актуальных данных 2025 года, это может быть:
+
 path = kagglehub.dataset_download("bismasajjad/global-ai-job-market-and-salary-trends-2025")
 
 print("Файлы скачаны в:", path)
@@ -56,8 +55,7 @@ def validate_missing_data(df):
         if missing_report[col] > 0:
             logging.info(f"Столбец '{col}': {missing_report[col]} пропусков ({missing_percent[col]:.2f}%)")
 
-    # Автоматическое решение 2025:
-    # Если пропусков < 5%, удаляем строки. Если больше — нужно заполнять медианой (для чисел)
+
     df_cleaned = df.dropna()
     logging.info(f"Обработка пропусков завершена. Удалено строк: {len(df) - len(df_cleaned)}")
     return df_cleaned
@@ -73,43 +71,32 @@ def validate_data_types(df):
 
     return df
 
-    # 1. ОБЯЗАТЕЛЬНО: Вызываем функции по очереди
-# Предположим, ваш исходный датасет называется df
 print("--- Запуск валидации данных 2025 ---")
 
-# Этап 1: Корректность типов
 df = validate_data_types(df)
 
-# Этап 2: Обработка пропусков
 df_cleaned = validate_missing_data(df)
 
-# 2. ВЫВОД ИТОГОВЫХ ДАННЫХ
 print("\n" + "="*40)
 print("ФИНАЛЬНЫЙ ОТЧЕТ ПОСЛЕ ОЧИСТКИ")
 print("="*40)
 
-# Вывод информации о размере
 print(f"Строк до обработки: {len(df)}")
 print(f"Строк после обработки: {len(df_cleaned)}")
 print(f"Удалено записей: {len(df) - len(df_cleaned)}")
 
-# Вывод типов данных для проверки
 print("\nТекущие типы столбцов:")
 print(df_cleaned.dtypes)
 
-# Вывод первых 5 строк очищенного датасета
 print("\nПервые 5 строк очищенных данных:")
-display(df_cleaned.head()) # Функция display лучше всего работает в Colab
+display(df_cleaned.head())
 print("="*40)
 
-# Настройка логов
 logging.basicConfig(level=logging.INFO)
 
-# Выполнение валидации
-df = validate_data_types(df)      # Сначала правим типы
-df = validate_missing_data(df)    # Затем удаляем пропуски (в т.ч. те, что возникли при конвертации)
+df = validate_data_types(df)      
+df = validate_missing_data(df)    
 
-# Проверка результата
 print("\nИтоговая информация о типах:")
 print(df.dtypes)
 
@@ -123,7 +110,6 @@ def handle_outliers_iqr(df, salary_usd):
     outliers = df[(df[salary_usd] < lower_bound) | (df[salary_usd] > upper_bound)]
     df_clean = df[(df[salary_usd] >= lower_bound) & (df[salary_usd] <= upper_bound)]
 
-    # Прямой вывод данных для понимания процесса
     print(f"--- АНАЛИЗ ВЫБРОСОВ ({salary_usd}) ---")
     print(f"Минимум: {df[salary_usd].min():.2f}, Максимум: {df[salary_usd].max():.2f}")
     print(f"Границы (IQR): {lower_bound:.2f} до {upper_bound:.2f}")
@@ -142,19 +128,15 @@ print("\nСтатистика ПОСЛЕ очистки:")
 print(df['salary_usd'].describe())
 
 def handle_outliers_zscore(df, salary_usd, threshold=3):
-    # копия чтобы не портить оригинал
     data_series = df[salary_usd].dropna()
 
-    # Вычисляем абсолютное значение Z-score
     z_scores = np.abs(stats.zscore(data_series))
 
-    # Индексы строк, где отклонение меньше порога
     #filtered_entries = z_scores < threshold
     keep_mask = z_scores < threshold
 
     valid_indices = data_series.index[keep_mask]
 
-    # Так как zscore возвращает массив без пропусков, сопоставляем его с исходным df
     df_clean = df.loc[valid_indices]
 
     removed = len(df) - len(df_clean)
@@ -163,34 +145,27 @@ def handle_outliers_zscore(df, salary_usd, threshold=3):
 
 df_final = handle_outliers_zscore(df, 'salary_usd')
 
-# 2. Печать итоговых показателей
 print("\n=== ИТОГ ОБРАБОТКИ ВЫБРОСОВ ===")
 print(f"Строк до: {len(df)}")
 print(f"Строк после: {len(df_final)}")
 print(f"Максимальная зарплата после очистки: {df_final['salary_usd'].max():,.0f} USD")
 print("-" * 30)
 
-# Предположим, df уже загружен и типы данных исправлены
 logging.basicConfig(level=logging.INFO)
 
-# 1. Чистим колонку зарплаты (salary_usd) методом IQR
 df = handle_outliers_iqr(df, 'salary_usd')
 
-# 2. Проверяем колонку удаленной работы (remote_ratio) на критические аномалии Z-score
 if 'remote_ratio' in df.columns:
     df = handle_outliers_zscore(df, 'remote_ratio')
 
 print(f"Итоговое количество чистых строк для анализа: {len(df)}")
 
 def validate_and_log_all(df):
-    # 1. Фиксируем начальное количество строк
-    # Используем .shape[0], чтобы получить именно число строк
     initial_rows = df.shape[0]
     initial_shape = df.shape
 
     print("=== НАЧАЛО ВАЛИДАЦИИ ДАТАСЕТА ===")
 
-    # Вызываем ваши подфункции (убедитесь, что они определены в Colab)
     try:
         df = validate_data_types(df)
         df = validate_missing_data(df)
@@ -200,15 +175,12 @@ def validate_and_log_all(df):
         print(f"ОШИБКА: Одна из функций не определена: {e}")
         return df
 
-    # 2. Фиксируем финальное количество строк
     final_rows = df.shape[0]
     final_shape = df.shape
 
-    # 3. Расчет итогов (используем только локальные переменные внутри функции)
     rows_lost = initial_rows - final_rows
     loss_percent = (rows_lost / initial_rows * 100) if initial_rows > 0 else 0
 
-    # ВЫВОД ИТОГОВ ЧЕРЕЗ PRINT
     print("\n" + "="*35)
     print("=== ИТОГОВЫЙ ОТЧЕТ ВАЛИДАЦИИ ===")
     print(f"Исходный размер:  {initial_shape}")
@@ -219,8 +191,6 @@ def validate_and_log_all(df):
 
     return df
 
-# --- ВЫЗОВ ФУНКЦИИ (самый важный шаг) ---
-# Замените 'df' на имя вашей таблицы с данными по зарплатам 2025
 try:
     df_clean = validate_and_log_all(df)
 except NameError:
@@ -229,26 +199,21 @@ except NameError:
 def final_preprocessing(df):
     print("--- Запуск полной обработки ---")
 
-    # 1. Удаление дубликатов
     duplicates = df.duplicated().sum()
     df = df.drop_duplicates()
     print(f"Удалено дубликатов: {duplicates}")
 
-    # 2. Замена пропусков медианой (для чисел)
     for col in df.select_dtypes(include=[np.number]).columns:
         if df[col].isnull().sum() > 0:
             median_val = df[col].median()
             df[col] = df[col].fillna(median_val)
             print(f"Пропуски в '{col}' заполнены медианой: {median_val}")
 
-    # 3. Кодирование категорий (простой метод Label Encoding)
-    # Превращаем текстовые колонки в категории для моделей ИИ
     for col in df.select_dtypes(include=['object']).columns:
         if df[col].nunique() < 16: # Кодируем только если мало уникальных значений
             df[col] = df[col].astype('category').cat.codes
             print(f"Столбец '{col}' закодирован в числа")
 
-    # 4. Масштабирование (нормализация зарплаты 0-1)
     if 'salary_usd' in df.columns:
         col_min = df['salary_usd'].min()
         col_max = df['salary_usd'].max()
@@ -258,30 +223,25 @@ def final_preprocessing(df):
     print("--- Обработка завершена ---")
     return df
 
-# ВЫВОД ИТОГА
 df_final = final_preprocessing(df_cleaned)
 display(df_final.head())
 
-"""Датасет готов к работе. В нем нет текста, только числовые значения. Нет пропусков и все данные имеют сопоставимый масштаб."""
 
 encoded_columns = [
     'salary_usd', 'remote_ratio', 'experience_level', 'employment_type',
     'company_size', 'education_required', 'industry', 'salary_currency'
 ]
 
-# Выводим итог: транспонируем (.T) для удобства чтения, если столбцов много
 stats_summary = df_final[encoded_columns].describe().round(2).T
 print("=== ИТОГОВАЯ СТАТИСТИКА ПО ЗАКОДИРОВАННЫМ ПРИЗНАКАМ ===")
 display(stats_summary)
 
-# Список столбцов, которые мы кодировали
 cols_to_map = ['experience_level', 'employment_type', 'company_size', 'salary_currency', 'education_required', 'industry']
 
 print("=== РАСШИФРОВКА КОДОВ (MAPPING) ===\n")
 
 for col in cols_to_map:
     if col in df.columns:
-        # Получаем категории в том порядке, в котором их пронумеровал Pandas
         mapping = dict(enumerate(df[col].astype('category').cat.categories))
 
         print(f"Столбец: {col}")
@@ -291,14 +251,12 @@ for col in cols_to_map:
             print(f"  {code} : {label}")
         print("-" * 30 + "\n")
 
-# Извлекаем месяц и квартал из даты публикации
 df_final['month'] = df_final['posting_date'].dt.month
 df_final['quarter'] = df_final['posting_date'].dt.quarter
 df_final['month_name'] = df_final['posting_date'].dt.month_name()
 
 print("Временные признаки успешно добавлены.")
 
-# Группируем данные по месяцам
 trend_data = df_final.groupby('month').agg({
     'salary_usd': 'mean',
     'job_id': 'count'
@@ -307,7 +265,6 @@ trend_data = df_final.groupby('month').agg({
 print("=== ТРЕНД РЫНКА AI В 2025 ГОДУ ===")
 display(trend_data)
 
-# Визуализация тренда
 
 plt.figure(figsize=(10, 5))
 plt.plot(trend_data.index, trend_data['salary_usd'], marker='o', color='green', linewidth=2)
@@ -317,7 +274,6 @@ plt.ylabel('Средняя зарплата')
 plt.grid(True, linestyle='--', alpha=0.7)
 plt.show()
 
-# Анализ активности по кварталам
 seasonality = df_final.groupby('quarter').agg({
     'job_id': 'count',
     'salary_usd': 'median'
@@ -326,12 +282,8 @@ seasonality = df_final.groupby('quarter').agg({
 print("\n=== СЕЗОННАЯ АКТИВНОСТЬ (ПО КВАРТАЛАМ) ===")
 display(seasonality)
 
-# Группируем данные по месяцу и уровню опыта
-# Используем среднюю зарплату для каждой группы
 trend_by_experience = df_final.groupby(['month', 'experience_level'])['salary_usd'].mean().unstack()
 
-# Заменим коды на понятные названия для легенды (согласно вашему mapping)
-# 0:EN, 1:EX, 2:MI, 3:SE (проверьте соответствие в вашем датасете)
 trend_by_experience.columns = ['Entry', 'Executive', 'Mid', 'Senior']
 
 print("Данные для анализа трендов по опыту подготовлены:")
@@ -349,7 +301,6 @@ plt.grid(True, linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.show()
 
-# Считаем количество вакансий по кварталам и опыту
 hiring_seasonality = pd.crosstab(df_final['quarter'], df_final['experience_level'])
 hiring_seasonality.columns = ['Entry', 'Executive', 'Mid', 'Senior']
 
@@ -366,18 +317,14 @@ plt.show()
 
 plt.figure(figsize=(12, 6))
 
-# Рисуем boxplot
 ax = sns.boxplot(x=df_final['salary_usd'], color='skyblue')
 
-# Рассчитываем статистики для подписей
 stats = df_final['salary_usd'].describe()
 q1, median, q3 = stats['25%'], stats['50%'], stats['75%']
 min_val, max_val = stats['min'], stats['max']
 
-# Список контрольных точек для подписей
 points = [min_val, q1, median, q3, max_val]
 
-# Добавляем текстовые подписи над каждой линией
 for point in points:
     ax.text(point, -0.4, f'${point:,.0f}',
             ha='center', va='center', fontweight='bold',
@@ -387,7 +334,6 @@ plt.title('Распределение зарплат с ключевыми ме�
 plt.xlabel('Зарплата в USD')
 plt.grid(axis='x', linestyle='--', alpha=0.6)
 
-# Увеличиваем лимит по вертикали, чтобы текст не обрезался
 plt.ylim(-0.6, 0.5)
 
 plt.show()
@@ -396,30 +342,24 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
 
-# Выбираем признаки для обучения
 features = ['experience_level', 'employment_type', 'company_size',
             'remote_ratio', 'education_required']
 X = df_final[features]
 y = df_final['salary_usd']
 
-# Разделяем на обучающую и тестовую выборки (80% / 20%)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 print(f"Обучающая выборка: {X_train.shape[0]} строк")
 print(f"Тестовая выборка: {X_test.shape[0]} строк")
 
-# Инициализация модели
 model = RandomForestRegressor(n_estimators=100, random_state=42)
 
-# Обучение
 model.fit(X_train, y_train)
 
 print("Модель успешно обучена!")
 
-# Предсказание на тестовых данных
 y_pred = model.predict(X_test)
 
-# Расчет метрик
 mae = mean_absolute_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
 
@@ -427,24 +367,19 @@ print("\n=== ИТОГИ ОБУЧЕНИЯ МОДЕЛИ ===")
 print(f"Средняя ошибка (MAE): ${mae:,.2f}")
 print(f"Коэффициент детерминации (R2): {r2:.2f}")
 
-# Пример предсказания для нового специалиста
-# Опыт: Mid (2), Full-time (2), Medium Company (1), Remote (100), Bachelor (1)
 new_specialist = [[2, 2, 1, 100, 1]]
 predicted_salary = model.predict(new_specialist)
 print(f"\nПрогноз зарплаты для Mid-специалиста: ${predicted_salary[0]:,.2f}")
 
-# Получаем значения важности из модели
 importances = model.feature_importances_
 feature_names = ['experience_level', 'employment_type', 'company_size',
                  'remote_ratio', 'education_required']
 
-# Создаем таблицу для удобства
 feature_importance_df = pd.DataFrame({
     'Признак': feature_names,
     'Важность': importances
 }).sort_values(by='Важность', ascending=False)
 
-# Визуализация
 plt.figure(figsize=(10, 6))
 sns.barplot(x='Важность', y='Признак', data=feature_importance_df, palette='magma')
 
@@ -455,11 +390,9 @@ plt.grid(axis='x', linestyle='--', alpha=0.7)
 
 plt.show()
 
-# Печать текстового итога
 print("Рейтинг влияния факторов:")
 print(feature_importance_df.to_string(index=False))
 
-#Расчет метрик
 mae = mean_absolute_error(y_test, y_pred)
 mse = mean_squared_error(y_test, y_pred)
 rmse = np.sqrt(mse)
@@ -496,10 +429,8 @@ def export_to_excel(df, stats_summary, filename="AI_Market_Report_2025.xlsx"):
 
     print(f"Отчет успешно сохранен в Excel: {filename}")
 
-# Запуск
 export_to_excel(df_final, stats_summary)
 
-# В Google Colab этот шрифт есть всегда и он поддерживает русский
 font_path = '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf'
 
 if os.path.exists(font_path):
@@ -509,17 +440,14 @@ else:
     print("Шрифт не найден по указанному пути!")
 
 def safe_pdf_export(df, filename="Final_Report_2025.pdf"):
-    # Создаем документ
     doc = SimpleDocTemplate(filename, pagesize=A4)
     elements = []
 
-    # Настройка стилей
     styles = getSampleStyleSheet()
     for style in styles.byName.values():
-        style.fontName = 'RussianFont' # Принудительно ставим русский шрифт везде
+        style.fontName = 'RussianFont' 
 
     try:
-        # 1. Заголовок
         elements.append(Paragraph("Аналитический отчет AI Job Market 2025", styles['Title']))
         elements.append(Spacer(1, 12))
 
@@ -532,7 +460,6 @@ def safe_pdf_export(df, filename="Final_Report_2025.pdf"):
         elements.append(Paragraph(f"Коэффициент детерминации (R2): {r2:.2f}", styles['Normal']))
         elements.append(Spacer(1, 20))
 
-        # Добавляем первый график (Важность признаков)
         elements.append(Paragraph("Влияние факторов на зарплату:", styles['Heading2']))
         elements.append(Image('importance.png', width=450, height=225))
         elements.append(Spacer(1, 20))
@@ -545,8 +472,6 @@ def safe_pdf_export(df, filename="Final_Report_2025.pdf"):
         elements.append(Spacer(1, 20))
 
         elements.append(Paragraph("Таблица вакансий (фрагмент):", styles['Heading2']))
-
-        # Подготовка таблицы (первые 50 строк)
 
         data_to_show = df[['job_title', 'experience_level', 'salary_usd']].head(50)
         table_data = [data_to_show.columns.to_list()] + data_to_show.values.tolist()
@@ -561,17 +486,14 @@ def safe_pdf_export(df, filename="Final_Report_2025.pdf"):
         ]))
         elements.append(table)
 
-        # ФИНАЛЬНАЯ СБОРКА
         doc.build(elements)
         print(f"Файл {filename} успешно создан и готов к открытию.")
 
     except Exception as e:
         print(f"Ошибка при создании PDF: {e}")
 
-# Запуск
 safe_pdf_export(df_final)
 
-# 1. График важности признаков
 plt.figure(figsize=(8, 4))
 feature_importance_df.plot(kind='barh', x='Признак', y='Важность', color='teal')
 plt.title('Feature Importance 2025')
@@ -579,7 +501,6 @@ plt.tight_layout()
 plt.savefig('importance.png', dpi=300)
 plt.close()
 
-# 2. График сезонности (вакансии по кварталам)
 plt.figure(figsize=(8, 4))
 hiring_seasonality.plot(kind='bar')
 plt.title('Hiring Seasonality 2025')
