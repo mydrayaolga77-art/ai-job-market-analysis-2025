@@ -32,3 +32,6 @@ jobs:
           git add .
           git commit -m "Автоматическое обновление анализа" || echo "Нет изменений"
           git push
+      - name: Run tests
+        run: |
+          pytest test_analysis.py
