@@ -3710,7 +3710,7 @@
         },
         "id": "v6mlkp-ErkUM",
         "outputId": "6638ee1b-b368-47a3-9113-dead18f8068f",
-        "collapsed": true
+        "collapsed": True
       },
       "id": "v6mlkp-ErkUM",
       "execution_count": 19,
