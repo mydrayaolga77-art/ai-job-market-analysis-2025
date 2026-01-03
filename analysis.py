@@ -743,7 +743,7 @@
         "colab": {
           "base_uri": "https://localhost:8080/"
         },
-        "collapsed": true,
+        "collapsed": True,
         "id": "Y5x-MZreaoBe",
         "outputId": "fca53270-053d-463e-e84e-f218e5d6e318"
       },
