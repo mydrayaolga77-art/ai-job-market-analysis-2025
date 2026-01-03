@@ -19,5 +19,4 @@ jobs:
       - name: Run analysis
         run: python analysis.py
       - name: Run tests
-        run: |
-          pytest test_analysis.py
+        run: pytest test_analysis.py
