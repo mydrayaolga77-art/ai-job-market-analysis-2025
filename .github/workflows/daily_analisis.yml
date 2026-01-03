@@ -23,7 +23,7 @@ jobs:
 
       - name: Run analysis
         run: |
-          python analysis.py
+          python проект_2025_г_ipynb.py
 
       - name: Commit and push changes
         run: |
@@ -34,4 +34,4 @@ jobs:
           git push
       - name: Run tests
         run: |
-          pytest test_analysis.py
+          pytest test_проект_2025_г_ipynb.py
