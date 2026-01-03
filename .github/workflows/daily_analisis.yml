@@ -23,7 +23,7 @@ jobs:
 
       - name: Run analysis
         run: |
-          python Проект_2025_г.py
+          python analysis.py
 
       - name: Commit and push changes
         run: |
